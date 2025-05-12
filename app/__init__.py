@@ -1,11 +1,23 @@
-from flask import Flask
+from fastapi import FastAPI
 from pythonjsonlogger import jsonlogger
-import os
+import logging
+from app.routes import router
+from app.config import settings
 
-def create_app():
-    app = Flask(__name__)
-    logger = jsonlogger.JsonFormatter('%(asctime)s %(levelname)s %(name)s %(message)s')
-    app.config.from_object('app.config.Config')
-    from app.routes import main_bp
-    app.register_blueprint(main_bp)
+logger = logging.getLogger()
+logHandler = logging.StreamHandler()
+formatter = jsonlogger.JsonFormatter('%(asctime)s %(levelname)s %(name)s %(message)s')
+logHandler.setFormatter(formatter)
+logger.addHandler(logHandler)
+logger.setLevel(logging.INFO)
+
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title="Garv API",
+        description="FastAPI version of Garv's API",
+        version="1.0.0",
+        debug=settings.DEBUG
+    )
+    
+    app.include_router(router)
     return app 
