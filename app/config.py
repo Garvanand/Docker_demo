@@ -1,13 +1,26 @@
 from pydantic_settings import BaseSettings
+from pathlib import Path
 import os
 
 class Settings(BaseSettings):
-    SECRET_KEY: str = os.getenv('SECRET_KEY', 'garv-secret-key-2024')
-    DEBUG: bool = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
-    HOST: str = os.getenv('HOST', '0.0.0.0')
-    PORT: int = int(os.getenv('PORT', 5000))
-
+    API_V1_STR: str = "/api/v1"
+    PROJECT_NAME: str = "Mother's Day PDF Processor"
+    DEBUG: bool = False
+    
+    STORAGE_DIR: Path = Path("/app/storage")
+    MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024
+    
+    TESSERACT_CMD: str = "/usr/bin/tesseract"
+    OCR_LANG: str = "eng"
+    
+    MAX_WORKERS: int = 4
+    PROCESS_TIMEOUT: int = 300
+    
+    ALLOW_ORIGINS: list = ["*"]
+    
     class Config:
-        env_file = ".env"
+        case_sensitive = True
 
-settings = Settings() 
+settings = Settings()
+
+settings.STORAGE_DIR.mkdir(parents=True, exist_ok=True) 

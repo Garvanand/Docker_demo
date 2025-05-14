@@ -1,23 +1,13 @@
 from fastapi import FastAPI
-from pythonjsonlogger import jsonlogger
-import logging
-from app.routes import router
-from app.config import settings
+import structlog
 
-logger = logging.getLogger()
-logHandler = logging.StreamHandler()
-formatter = jsonlogger.JsonFormatter('%(asctime)s %(levelname)s %(name)s %(message)s')
-logHandler.setFormatter(formatter)
-logger.addHandler(logHandler)
-logger.setLevel(logging.INFO)
+logger = structlog.get_logger()
 
 def create_app() -> FastAPI:
     app = FastAPI(
         title="Garv API",
-        description="FastAPI version of Garv's API",
+        description="FastAPI application for Docker Demo",
         version="1.0.0",
-        debug=settings.DEBUG
+        debug=True
     )
-    
-    app.include_router(router)
     return app 

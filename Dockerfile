@@ -1,31 +1,47 @@
-FROM python:3.9-slim
+FROM python:3.11-slim as builder
+
+ARG BUILD_DATE
+ARG VERSION=1.0.0
+ARG VCS_REF
+
+LABEL org.label-schema.build-date=$BUILD_DATE \
+      org.label-schema.name="Mother's Day PDF Processor" \
+      org.label-schema.description="PDF Processing Application with OCR and Table Extraction" \
+      org.label-schema.version=$VERSION \
+      org.label-schema.vcs-ref=$VCS_REF \
+      org.label-schema.schema-version="1.0" \
+      maintainer="Your Name <your.email@example.com>" \
+      security.privileged="false"
 
 WORKDIR /app
 
-# Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    && rm -rf /var/lib/apt/lists/*
+    libmagic1 \
+    tesseract-ocr \
+    ghostscript \
+    poppler-utils \
+    libgl1-mesa-glx \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
-# Copy requirements first to leverage Docker cache
 COPY requirements.txt .
-
-# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+COPY app/ app/
 
-# Create non-root user
-RUN useradd -m -u 1000 garvuser && \
-    chown -R garvuser:garvuser /app
+RUN mkdir -p /app/storage && \
+    chmod 755 /app/storage
 
-# Switch to non-root user
-USER garvuser
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:5000/health || exit 1
+USER appuser
 
-# Run the application
-CMD ["uvicorn", "app:create_app", "--host", "0.0.0.0", "--port", "5000", "--factory"] 
+ENV PYTHONPATH=/app \
+    PYTHONUNBUFFERED=1 \
+    TESSERACT_CMD=/usr/bin/tesseract
+
+EXPOSE 8000
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
